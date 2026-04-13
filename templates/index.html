@@ -17,7 +17,6 @@
 
   .container { max-width: 620px; margin: 0 auto; }
 
-  /* Header */
   .header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
   .logo {
     width: 40px; height: 40px; background: #0D1B2A; border-radius: 10px;
@@ -25,54 +24,54 @@
   }
   .logo svg { width: 20px; height: 20px; fill: #5b9bd5; }
   .header h1 { font-size: 17px; font-weight: 600; color: #0D1B2A; }
-  .header p { font-size: 13px; color: #666; margin-top: 2px; }
+  .header p  { font-size: 13px; color: #666; margin-top: 2px; }
 
-  /* Cards */
   .card {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 14px;
+    background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 12px; padding: 20px; margin-bottom: 14px;
   }
   .card-title {
     font-size: 11px; font-weight: 600; color: #888;
-    text-transform: uppercase; letter-spacing: .06em;
-    margin-bottom: 14px;
+    text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px;
   }
 
-  /* Upload zone */
+  /* Upload zones */
+  .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
   .upload-zone {
     border: 2px dashed #d1d5db; border-radius: 8px;
-    padding: 28px 20px; text-align: center;
+    padding: 20px 12px; text-align: center;
     cursor: pointer; transition: border-color .15s, background .15s;
-    background: #fafafa;
+    background: #fafafa; position: relative;
   }
-  .upload-zone:hover, .upload-zone.dragover {
-    border-color: #5b9bd5; background: #f0f6ff;
-  }
-  .upload-zone svg { width: 28px; height: 28px; color: #9ca3af; margin: 0 auto 10px; display: block; }
-  .upload-zone p { font-size: 14px; color: #555; }
-  .upload-zone span { font-size: 12px; color: #9ca3af; }
+  .upload-zone:hover, .upload-zone.dragover { border-color: #5b9bd5; background: #f0f6ff; }
+  .upload-zone.filled { border-color: #34d399; border-style: solid; background: #f0fdf4; }
   .upload-zone input { display: none; }
+  .upload-zone svg { width: 22px; height: 22px; color: #9ca3af; margin: 0 auto 8px; display: block; }
+  .upload-zone.filled svg { color: #34d399; }
+  .upload-zone .zone-label { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+  .upload-zone .zone-hint  { font-size: 11px; color: #9ca3af; }
+  .upload-zone .zone-fname { font-size: 11px; color: #065f46; font-weight: 500; margin-top: 6px; word-break: break-all; }
+  .upload-zone .zone-badge {
+    position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    background: #0D1B2A; color: #5b9bd5; font-size: 10px; font-weight: 700;
+    padding: 2px 10px; border-radius: 20px; white-space: nowrap;
+  }
 
-  /* File items */
-  .files-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-  .file-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; background: #f8f9fa;
-    border-radius: 8px; border: 1px solid #e9ecef;
+  .pptx-zone {
+    border: 2px dashed #d1d5db; border-radius: 8px;
+    padding: 16px 20px; text-align: center;
+    cursor: pointer; transition: border-color .15s, background .15s;
+    background: #fafafa; display: flex; align-items: center; gap: 12px;
   }
-  .file-badge {
-    width: 30px; height: 30px; border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 700; flex-shrink: 0;
-  }
-  .badge-xlsx { background: #d1fae5; color: #065f46; }
-  .badge-pptx { background: #fde68a; color: #92400e; }
-  .file-name { font-size: 13px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .file-size { font-size: 11px; color: #9ca3af; }
-  .file-ok { font-size: 11px; color: #065f46; background: #d1fae5; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
+  .pptx-zone:hover, .pptx-zone.dragover { border-color: #5b9bd5; background: #f0f6ff; }
+  .pptx-zone.filled { border-color: #34d399; border-style: solid; background: #f0fdf4; }
+  .pptx-zone input  { display: none; }
+  .pptx-zone svg    { width: 28px; height: 28px; flex-shrink: 0; color: #9ca3af; }
+  .pptx-zone.filled svg { color: #34d399; }
+  .pptx-zone .pz-text p    { font-size: 13px; color: #374151; font-weight: 500; }
+  .pptx-zone .pz-text span { font-size: 11px; color: #9ca3af; }
+  .pptx-zone .pz-fname      { font-size: 12px; color: #065f46; font-weight: 500; margin-top: 4px; }
 
   /* Config grid */
   .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -80,17 +79,19 @@
   .field input {
     width: 100%; padding: 8px 10px; font-size: 13px;
     border: 1px solid #d1d5db; border-radius: 6px;
-    background: #fff; color: #1a1a1a;
-    transition: border-color .15s;
+    background: #fff; color: #1a1a1a; transition: border-color .15s;
   }
   .field input:focus { outline: none; border-color: #5b9bd5; box-shadow: 0 0 0 3px rgba(91,155,213,.12); }
 
-  /* Variaciones section */
-  .section-label {
-    font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase;
-    letter-spacing: .06em; margin: 14px 0 10px;
+  /* Auto-calc badge */
+  .auto-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #ecfdf5; border: 1px solid #6ee7b7;
+    border-radius: 20px; padding: 5px 12px;
+    font-size: 12px; color: #065f46; font-weight: 500;
+    margin-bottom: 0;
   }
-  .var-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .auto-badge svg { width: 14px; height: 14px; stroke: #065f46; fill: none; stroke-width: 2; }
 
   /* Generate button */
   .btn-generate {
@@ -99,24 +100,24 @@
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     gap: 8px; margin-top: 4px; transition: background .15s, transform .1s;
   }
-  .btn-generate:hover { background: #1a2f4a; }
-  .btn-generate:active { transform: scale(0.99); }
+  .btn-generate:hover    { background: #1a2f4a; }
+  .btn-generate:active   { transform: scale(0.99); }
   .btn-generate:disabled { background: #9ca3af; cursor: not-allowed; }
-  .btn-generate svg { width: 18px; height: 18px; fill: none; stroke: #5b9bd5; stroke-width: 2; }
+  .btn-generate svg { width: 16px; height: 16px; stroke: #5b9bd5; fill: none; stroke-width: 2.5; }
 
   /* Progress */
   .progress-card { display: none; }
   .progress-card.visible { display: block; }
   .steps { display: flex; flex-direction: column; gap: 10px; }
-  .step { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #9ca3af; }
-  .step.done { color: #1a1a1a; }
+  .step  { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #9ca3af; }
+  .step.done   { color: #1a1a1a; }
   .step.active { color: #0D1B2A; font-weight: 500; }
   .step-dot {
     width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center; font-size: 11px;
     border: 1.5px solid #e5e7eb; color: #9ca3af;
   }
-  .step.done .step-dot { background: #d1fae5; border-color: #34d399; color: #065f46; }
+  .step.done   .step-dot { background: #d1fae5; border-color: #34d399; color: #065f46; }
   .step.active .step-dot {
     background: #0D1B2A; border-color: #0D1B2A; color: #5b9bd5;
     animation: pulse 1.2s ease-in-out infinite;
@@ -141,13 +142,12 @@
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   .dl-icon svg { width: 20px; height: 20px; stroke: #6ee7b7; fill: none; stroke-width: 2; }
-  .dl-info p { font-size: 14px; font-weight: 600; color: #065f46; }
+  .dl-info p    { font-size: 14px; font-weight: 600; color: #065f46; }
   .dl-info span { font-size: 12px; color: #059669; }
   .dl-btn {
     margin-left: auto; padding: 9px 18px; background: #065f46; color: #ecfdf5;
     border: none; border-radius: 6px; font-size: 13px; font-weight: 600;
-    cursor: pointer; text-decoration: none; flex-shrink: 0;
-    transition: background .15s;
+    cursor: pointer; text-decoration: none; flex-shrink: 0; transition: background .15s;
   }
   .dl-btn:hover { background: #047857; }
 </style>
@@ -162,62 +162,94 @@
     </div>
     <div>
       <h1>Sider Express — Generador de reportes</h1>
-      <p>Sube los archivos, completa el periodo y descarga el Slides actualizado</p>
+      <p>Sube los tres archivos, completa el periodo y descarga el reporte listo</p>
     </div>
   </div>
 
-  <!-- 1. Archivos -->
+  <!-- 1. Data Sheets -->
   <div class="card">
-    <div class="card-title">1. Archivos</div>
-    <div class="upload-zone" id="dropzone" onclick="document.getElementById('file-input').click()">
+    <div class="card-title">1. Archivos de datos</div>
+    <div class="upload-grid">
+
+      <!-- XLSX Actual -->
+      <div class="upload-zone" id="zone-actual" onclick="document.getElementById('input-actual').click()">
+        <div class="zone-badge">Semana actual</div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 17v-2m3 2v-4m3 4v-6M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H9l-4 4v10a2 2 0 002 2z"/>
+        </svg>
+        <div class="zone-label">Data actual</div>
+        <div class="zone-hint">.xlsx</div>
+        <div class="zone-fname" id="fname-actual"></div>
+        <input type="file" id="input-actual" accept=".xlsx">
+      </div>
+
+      <!-- XLSX Anterior -->
+      <div class="upload-zone" id="zone-anterior" onclick="document.getElementById('input-anterior').click()">
+        <div class="zone-badge">Semana anterior</div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 17v-2m3 2v-4m3 4v-6M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H9l-4 4v10a2 2 0 002 2z"/>
+        </svg>
+        <div class="zone-label">Data anterior</div>
+        <div class="zone-hint">.xlsx</div>
+        <div class="zone-fname" id="fname-anterior"></div>
+        <input type="file" id="input-anterior" accept=".xlsx">
+      </div>
+
+    </div>
+
+    <!-- Auto-calc indicator -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+      <span class="auto-badge">
+        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+        Las variaciones del funnel se calculan automáticamente
+      </span>
+    </div>
+  </div>
+
+  <!-- 2. Plantilla PPTX -->
+  <div class="card">
+    <div class="card-title">2. Plantilla de presentación</div>
+    <div class="pptx-zone" id="zone-pptx" onclick="document.getElementById('input-pptx').click()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0l-3 3m3-3l3 3"/>
       </svg>
-      <p>Arrastra aquí o haz clic para seleccionar</p>
-      <span>Acepta: .xlsx y .pptx (máx 50 MB)</span>
-      <input type="file" id="file-input" accept=".xlsx,.pptx" multiple>
+      <div class="pz-text">
+        <p>Subir plantilla PPTX</p>
+        <span>Sider_Express_Plantilla_con_placeholders.pptx</span>
+        <div class="pz-fname" id="fname-pptx"></div>
+      </div>
+      <input type="file" id="input-pptx" accept=".pptx">
     </div>
-    <div class="files-list" id="files-list"></div>
   </div>
 
-  <!-- 2. Periodo -->
+  <!-- 3. Periodo -->
   <div class="card">
-    <div class="card-title">2. Periodo del reporte</div>
+    <div class="card-title">3. Periodo del reporte</div>
     <div class="config-grid">
       <div class="field">
         <label>Mes</label>
-        <input type="text" id="mes" placeholder="ABRIL" value="ABRIL">
+        <input type="text" id="mes" placeholder="ABRIL">
       </div>
       <div class="field">
         <label>Semana #</label>
-        <input type="text" id="semana" placeholder="S15" value="">
+        <input type="text" id="semana" placeholder="S15">
       </div>
       <div class="field">
         <label>Fecha inicio</label>
-        <input type="text" id="periodo_inicio" placeholder="07/04" value="">
+        <input type="text" id="periodo_inicio" placeholder="07/04">
       </div>
       <div class="field">
         <label>Fecha fin</label>
-        <input type="text" id="periodo_fin" placeholder="14/04" value="">
+        <input type="text" id="periodo_fin" placeholder="14/04">
       </div>
-    </div>
-
-    <div class="section-label">Variaciones del funnel (vs semana anterior)</div>
-    <div class="var-grid">
-      <div class="field"><label>FB Inv. var%</label><input type="text" id="fb_inv_var" placeholder="-15.62%"></div>
-      <div class="field"><label>FB Leads var%</label><input type="text" id="fb_leads_var" placeholder="+18.22%"></div>
-      <div class="field"><label>FB CPL actual</label><input type="text" id="fb_cpl_act" placeholder="$0.57"></div>
-      <div class="field"><label>FB CPL anterior</label><input type="text" id="fb_cpl_ant" placeholder="$0.67"></div>
-      <div class="field"><label>FB CPL var%</label><input type="text" id="fb_cpl_var" placeholder="-13.25%"></div>
-      <div class="field"><label>Google Inv var%</label><input type="text" id="g_inv_var" placeholder="+12.3%"></div>
-      <div class="field"><label>Google Leads var%</label><input type="text" id="g_leads_var" placeholder="-5.2%"></div>
-      <div class="field"><label>Google CPL var%</label><input type="text" id="g_cpl_var" placeholder="+10.52%"></div>
     </div>
   </div>
 
-  <!-- Botón generar -->
+  <!-- Botón -->
   <button class="btn-generate" id="btn-generate" onclick="generate()">
-    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3l14 9-14 9V3z"/></svg>
+    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 3l14 9-14 9V3z"/>
+    </svg>
     Generar reporte con Claude
   </button>
 
@@ -226,10 +258,11 @@
     <div class="card-title">Procesando...</div>
     <div class="steps" id="steps">
       <div class="step" id="s1"><div class="step-dot">1</div><span>Leyendo archivos</span></div>
-      <div class="step" id="s2"><div class="step-dot">2</div><span>Extrayendo datos del Sheet</span></div>
-      <div class="step" id="s3"><div class="step-dot">3</div><span>Claude generando textos analíticos</span></div>
-      <div class="step" id="s4"><div class="step-dot">4</div><span>Rellenando placeholders en la presentación</span></div>
-      <div class="step" id="s5"><div class="step-dot">5</div><span>Preparando descarga</span></div>
+      <div class="step" id="s2"><div class="step-dot">2</div><span>Extrayendo datos de ambos Sheets</span></div>
+      <div class="step" id="s3"><div class="step-dot">3</div><span>Calculando variaciones automáticamente</span></div>
+      <div class="step" id="s4"><div class="step-dot">4</div><span>Claude generando textos analíticos</span></div>
+      <div class="step" id="s5"><div class="step-dot">5</div><span>Rellenando presentación</span></div>
+      <div class="step" id="s6"><div class="step-dot">6</div><span>Preparando descarga</span></div>
     </div>
   </div>
 
@@ -253,60 +286,59 @@
 </div>
 
 <script>
-  let xlsxFile = null, pptxFile = null;
-  const startTime = {};
+  let files = { actual: null, anterior: null, pptx: null };
 
-  /* ── Drag & drop ── */
-  const dz = document.getElementById("dropzone");
-  dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("dragover"); });
-  dz.addEventListener("dragleave", () => dz.classList.remove("dragover"));
-  dz.addEventListener("drop", e => {
-    e.preventDefault(); dz.classList.remove("dragover");
-    handleFiles([...e.dataTransfer.files]);
-  });
-  document.getElementById("file-input").addEventListener("change", e => {
-    handleFiles([...e.target.files]);
-  });
+  // ── Inputs
+  document.getElementById("input-actual").addEventListener("change",   e => setFile("actual",   e.target.files[0]));
+  document.getElementById("input-anterior").addEventListener("change", e => setFile("anterior", e.target.files[0]));
+  document.getElementById("input-pptx").addEventListener("change",     e => setFile("pptx",     e.target.files[0]));
 
-  function handleFiles(files) {
-    files.forEach(f => {
-      if (f.name.endsWith(".xlsx")) xlsxFile = f;
-      if (f.name.endsWith(".pptx")) pptxFile = f;
+  // ── Drag & drop para cada zona
+  ["actual","anterior"].forEach(key => {
+    const zone = document.getElementById(`zone-${key}`);
+    zone.addEventListener("dragover",  e => { e.preventDefault(); zone.classList.add("dragover"); });
+    zone.addEventListener("dragleave", () => zone.classList.remove("dragover"));
+    zone.addEventListener("drop", e => {
+      e.preventDefault(); zone.classList.remove("dragover");
+      const f = e.dataTransfer.files[0];
+      if (f && f.name.endsWith(".xlsx")) setFile(key, f);
     });
-    renderFileList();
+  });
+
+  const pptxZone = document.getElementById("zone-pptx");
+  pptxZone.addEventListener("dragover",  e => { e.preventDefault(); pptxZone.classList.add("dragover"); });
+  pptxZone.addEventListener("dragleave", () => pptxZone.classList.remove("dragover"));
+  pptxZone.addEventListener("drop", e => {
+    e.preventDefault(); pptxZone.classList.remove("dragover");
+    const f = e.dataTransfer.files[0];
+    if (f && f.name.endsWith(".pptx")) setFile("pptx", f);
+  });
+
+  function setFile(key, file) {
+    if (!file) return;
+    files[key] = file;
+    const zoneId = key === "pptx" ? "zone-pptx" : `zone-${key}`;
+    const fnameId = key === "pptx" ? "fname-pptx" : `fname-${key}`;
+    document.getElementById(zoneId).classList.add("filled");
+    document.getElementById(fnameId).textContent = file.name;
   }
 
-  function renderFileList() {
-    const list = document.getElementById("files-list");
-    list.innerHTML = "";
-    [[xlsxFile,"XLSX","badge-xlsx"],[pptxFile,"PPT","badge-pptx"]].forEach(([f,label,cls]) => {
-      if (!f) return;
-      const size = f.size < 1024*1024 ? `${(f.size/1024).toFixed(0)} KB` : `${(f.size/1024/1024).toFixed(1)} MB`;
-      list.innerHTML += `
-        <div class="file-item">
-          <div class="file-badge ${cls}">${label}</div>
-          <span class="file-name">${f.name}</span>
-          <span class="file-size">${size}</span>
-          <span class="file-ok">Listo</span>
-        </div>`;
-    });
-  }
-
-  /* ── Steps ── */
+  // ── Steps
   function setStep(n) {
-    for (let i = 1; i <= 5; i++) {
+    const total = 6;
+    for (let i = 1; i <= total; i++) {
       const el = document.getElementById(`s${i}`);
+      if (!el) continue;
       el.className = "step" + (i < n ? " done" : i === n ? " active" : "");
       if (i < n) el.querySelector(".step-dot").textContent = "✓";
     }
   }
 
-  /* ── Generate ── */
+  // ── Generate
   async function generate() {
-    if (!xlsxFile || !pptxFile) {
-      showError("Debes subir el archivo XLSX y el PPTX antes de continuar.");
-      return;
-    }
+    if (!files.actual)   return showError("Sube el XLSX de la semana actual.");
+    if (!files.anterior) return showError("Sube el XLSX de la semana anterior.");
+    if (!files.pptx)     return showError("Sube la plantilla PPTX.");
 
     const btn = document.getElementById("btn-generate");
     btn.disabled = true;
@@ -318,25 +350,25 @@
     setStep(1);
 
     const fd = new FormData();
-    fd.append("xlsx", xlsxFile);
-    fd.append("pptx", pptxFile);
-    ["mes","semana","periodo_inicio","periodo_fin",
-     "fb_inv_var","fb_leads_var","fb_cpl_act","fb_cpl_ant","fb_cpl_var",
-     "g_inv_var","g_leads_var","g_cpl_var"].forEach(id => {
+    fd.append("xlsx_actual",   files.actual);
+    fd.append("xlsx_anterior", files.anterior);
+    fd.append("pptx",          files.pptx);
+    ["mes","semana","periodo_inicio","periodo_fin"].forEach(id => {
       fd.append(id, document.getElementById(id).value);
     });
 
-    /* Simular progreso visual mientras el servidor trabaja */
+    // Animación de pasos mientras el servidor trabaja
     setTimeout(() => setStep(2), 800);
-    setTimeout(() => setStep(3), 2000);
+    setTimeout(() => setStep(3), 1800);
+    setTimeout(() => setStep(4), 3000);
 
     try {
       const res = await fetch("/generate", { method: "POST", body: fd });
 
-      setStep(4);
-      await new Promise(r => setTimeout(r, 600));
       setStep(5);
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 500));
+      setStep(6);
+      await new Promise(r => setTimeout(r, 300));
 
       if (!res.ok) {
         const err = await res.json();
@@ -347,19 +379,19 @@
       const url  = URL.createObjectURL(blob);
       const secs = ((Date.now() - t0) / 1000).toFixed(0);
 
-      const mes = document.getElementById("mes").value.toUpperCase();
+      const mes = document.getElementById("mes").value.toUpperCase() || "REPORTE";
       const pi  = document.getElementById("periodo_inicio").value.replace(/\//g,"");
       const pf  = document.getElementById("periodo_fin").value.replace(/\//g,"");
       const fname = `Sider_Reporte_${mes}_${pi}_${pf}.pptx`;
 
       document.getElementById("dl-filename").textContent = fname;
-      document.getElementById("dl-time").textContent = `Generado en ${secs} segundos`;
+      document.getElementById("dl-time").textContent = `Generado en ${secs} segundos · variaciones calculadas automáticamente`;
       const dlBtn = document.getElementById("dl-btn");
-      dlBtn.href = url;
+      dlBtn.href     = url;
       dlBtn.download = fname;
       document.getElementById("download-card").classList.add("visible");
 
-    } catch (e) {
+    } catch(e) {
       showError(e.message);
     } finally {
       btn.disabled = false;
