@@ -502,7 +502,16 @@ def fill_pptx(pptx_bytes, replacements):
 def health():
     return jsonify({"status": "ok", "time": datetime.utcnow().isoformat()})
 
-
+@app.route("/modelos")
+def listar_modelos():
+    try:
+        from google import genai
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        modelos = client.models.list()
+        nombres = [m.name for m in modelos]
+        return jsonify({"modelos": nombres})
+    except Exception as e:
+        return jsonify({"error": str(e)})
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
