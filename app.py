@@ -1,8 +1,7 @@
 """
-Sider Express — Report Web App v2
-===================================
-Recibe XLSX actual + XLSX anterior + PPTX plantilla.
-Calcula variaciones automáticamente. Sin campos manuales.
+Sider Express — Report Web App v3 (Google Gemini)
+===================================================
+Igual que v2 pero usa Google Gemini (gratuito) en lugar de Anthropic API.
 """
 
 import os
@@ -11,13 +10,13 @@ import json
 import re
 from datetime import datetime
 from flask import Flask, request, jsonify, send_file, render_template
-import anthropic
+import google.generativeai as genai
 import openpyxl
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # ─────────────────────────────────────────────
 # RUTAS
@@ -30,7 +29,6 @@ def index():
 @app.route("/generate", methods=["POST"])
 def generate():
     try:
-        # 1. Validar archivos recibidos
         if "xlsx_actual" not in request.files:
             return jsonify({"error": "Falta el XLSX de la semana actual."}), 400
         if "xlsx_anterior" not in request.files:
@@ -49,26 +47,16 @@ def generate():
             "semana":         request.form.get("semana", ""),
         }
 
-        # 2. Extraer datos de ambos Sheets
         data_actual   = extract_xlsx_data(xlsx_actual)
         data_anterior = extract_xlsx_data(xlsx_anterior)
+        variaciones   = calcular_variaciones(data_actual, data_anterior)
+        texts         = generate_texts_with_gemini(data_actual, data_anterior, variaciones, config)
+        replacements  = build_replacements(data_actual, data_anterior, variaciones, texts, config)
+        output_bytes  = fill_pptx(pptx_bytes, replacements)
 
-        # 3. Calcular variaciones automáticamente
-        variaciones = calcular_variaciones(data_actual, data_anterior)
-
-        # 4. Generar textos con Claude
-        texts = generate_texts_with_claude(data_actual, data_anterior, variaciones, config)
-
-        # 5. Construir reemplazos
-        replacements = build_replacements(data_actual, data_anterior, variaciones, texts, config)
-
-        # 6. Rellenar PPTX
-        output_bytes = fill_pptx(pptx_bytes, replacements)
-
-        # 7. Nombre del archivo de salida
-        mes = config.get("mes", "reporte").upper()
-        pi  = config.get("periodo_inicio", "").replace("/", "")
-        pf  = config.get("periodo_fin", "").replace("/", "")
+        mes      = config.get("mes", "reporte").upper()
+        pi       = config.get("periodo_inicio", "").replace("/", "")
+        pf       = config.get("periodo_fin", "").replace("/", "")
         filename = f"Sider_Reporte_{mes}_{pi}_{pf}.pptx"
 
         return send_file(
@@ -141,7 +129,6 @@ def extract_xlsx_data(xlsx_bytes):
 # CÁLCULO AUTOMÁTICO DE VARIACIONES
 # ─────────────────────────────────────────────
 def to_float(val):
-    """Convierte cualquier valor a float de forma segura."""
     if val is None:
         return None
     try:
@@ -152,7 +139,6 @@ def to_float(val):
 
 
 def calc_var(actual, anterior):
-    """Calcula variación porcentual entre dos valores. Devuelve string formateado."""
     a = to_float(actual)
     b = to_float(anterior)
     if a is None or b is None or b == 0:
@@ -163,7 +149,6 @@ def calc_var(actual, anterior):
 
 
 def fmt_currency(val):
-    """Formatea como moneda."""
     v = to_float(val)
     if v is None:
         return str(val) if val else "-"
@@ -189,20 +174,14 @@ def _get_raw(rows, label, col_idx):
 
 
 def calcular_variaciones(actual, anterior):
-    """
-    Compara los datos del Sheet actual vs anterior y calcula
-    todas las variaciones del funnel automáticamente.
-    """
     var = {}
 
-    # ── Totales Meta (campañas regulares)
+    # Meta / Facebook totales
     row_act = _find_row(actual["reg_comp"],   "Plataforma", "Total")
     row_ant = _find_row(anterior["reg_comp"], "Plataforma", "Total")
-
     vals_act = list(row_act.values())
     vals_ant = list(row_ant.values())
 
-    # Columnas: Plataforma(0), Campaña(1), LeadsAct(2), CPLact(3), InvAct(4)
     inv_act  = vals_act[4] if len(vals_act) > 4 else None
     inv_ant  = vals_ant[4] if len(vals_ant) > 4 else None
     lead_act = vals_act[2] if len(vals_act) > 2 else None
@@ -220,10 +199,9 @@ def calcular_variaciones(actual, anterior):
     var["fb_cpl_ant"]   = fmt_currency(cpl_ant)
     var["fb_cpl_var"]   = calc_var(cpl_act, cpl_ant)
 
-    # ── Google Ads
-    row_g_act = _find_row(actual["reg_comp"],   "Plataforma", "Google")
-    row_g_ant = _find_row(anterior["reg_comp"], "Plataforma", "Google")
-
+    # Google Ads
+    row_g_act  = _find_row(actual["reg_comp"],   "Plataforma", "Google")
+    row_g_ant  = _find_row(anterior["reg_comp"], "Plataforma", "Google")
     vals_g_act = list(row_g_act.values())
     vals_g_ant = list(row_g_ant.values())
 
@@ -248,10 +226,11 @@ def calcular_variaciones(actual, anterior):
 
 
 # ─────────────────────────────────────────────
-# GENERACIÓN DE TEXTOS CON CLAUDE
+# GENERACIÓN DE TEXTOS CON GOOGLE GEMINI
 # ─────────────────────────────────────────────
-def generate_texts_with_claude(data_actual, data_anterior, variaciones, config):
-    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+def generate_texts_with_gemini(data_actual, data_anterior, variaciones, config):
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel("gemini-1.5-flash")
 
     reg_comp_clean = [r for r in data_actual["reg_comp"]
                       if r.get("Plataforma") or r.get("Campaña")]
@@ -277,7 +256,7 @@ MES: {config.get('mes')}
 === CAMPAÑAS INCENTIVOS — MÉTRICAS SECUNDARIAS ===
 {json.dumps(data_actual['inc_met'], ensure_ascii=False, indent=2)}
 
-=== VARIACIONES VS SEMANA ANTERIOR (calculadas automáticamente) ===
+=== VARIACIONES VS SEMANA ANTERIOR ===
 Facebook - Inversión: {variaciones['fb_inv_ant']} → {variaciones['fb_inv_act']} ({variaciones['fb_inv_var']})
 Facebook - Leads: {variaciones['fb_leads_ant']} → {variaciones['fb_leads_act']} ({variaciones['fb_leads_var']})
 Facebook - CPL: {variaciones['fb_cpl_ant']} → {variaciones['fb_cpl_act']} ({variaciones['fb_cpl_var']})
@@ -285,33 +264,28 @@ Google - Inversión: {variaciones['g_inv_ant']} → {variaciones['g_inv_act']} (
 Google - Leads: {variaciones['g_leads_ant']} → {variaciones['g_leads_act']} ({variaciones['g_leads_var']})
 Google - CPL: {variaciones['g_cpl_ant']} → {variaciones['g_cpl_act']} ({variaciones['g_cpl_var']})
 
-Genera textos analíticos directos, basados en datos. Máximo 4-5 oraciones por campo.
-Sin viñetas. Destaca variaciones %, plataformas líderes, eficiencia de CPL y CTR.
+Genera textos analíticos ejecutivos, directos, basados 100% en los datos.
+Máximo 4-5 oraciones por campo. Sin viñetas.
 
-Responde SOLO con JSON válido, sin backticks ni texto extra:
+Responde ÚNICAMENTE con un JSON válido. Sin backticks, sin texto antes ni después.
 
 {{
-  "comentario_overview": "Análisis comparativo campañas regulares: volumen, variación leads y CPL vs semana anterior.",
-  "comentario_metricas_sec": "Análisis CTR único, % mensajes y CPM. Qué indica sobre calidad del tráfico.",
-  "comentario_incentivos": "Análisis campañas incentivos: crecimiento Lima vs Trujillo, CPL, inversión.",
-  "comentario_inc_metricas": "Análisis métricas secundarias incentivos: % mensajes, CTR, CPM.",
-  "fb_comentario_cpl": "CPL (Costo por lead): [una oración sobre la variación del CPL en Facebook]",
-  "fb_comentario_leads": "Leads: [una oración sobre el volumen de leads en Facebook]",
-  "g_comentario_cpl": "CPL (Costo por lead): [una oración sobre la variación del CPL en Google Ads]",
-  "g_comentario_leads": "Leads: [una oración sobre el volumen de leads en Google Ads]",
+  "comentario_overview": "...",
+  "comentario_metricas_sec": "...",
+  "comentario_incentivos": "...",
+  "comentario_inc_metricas": "...",
+  "fb_comentario_cpl": "CPL (Costo por lead): ...",
+  "fb_comentario_leads": "Leads: ...",
+  "g_comentario_cpl": "CPL (Costo por lead): ...",
+  "g_comentario_leads": "Leads: ...",
   "next_steps_meta": "bullet 1\\nbullet 2\\nbullet 3\\nbullet 4",
   "next_steps_google": "bullet 1\\nbullet 2\\nbullet 3",
   "next_steps_seguimiento": "bullet 1\\nbullet 2\\nbullet 3"
 }}
 """
 
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=2000,
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    raw = message.content[0].text.strip()
+    response = model.generate_content(prompt)
+    raw = response.text.strip()
     raw = re.sub(r"^```(?:json)?\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)
     return json.loads(raw.strip())
@@ -332,13 +306,12 @@ def build_replacements(data_actual, data_anterior, variaciones, texts, config):
     rep = {}
     act = data_actual
 
-    # ── Portada
     rep["{{MES}}"]            = config.get("mes", "")
     rep["{{PERIODO_INICIO}}"] = config.get("periodo_inicio", "")
     rep["{{PERIODO_FIN}}"]    = config.get("periodo_fin", "")
     rep["{{SEMANA}}"]         = config.get("semana", "")
 
-    # ── PRESUPUESTO
+    # PRESUPUESTO
     pres_items = [
         ("Meta Perfo",    "PRES_META_PERFO"),
         ("Meta Branding", "PRES_META_BRAND"),
@@ -352,7 +325,7 @@ def build_replacements(data_actual, data_anterior, variaciones, texts, config):
         rep[f"{{{{{prefix}_META}}}}"] = _v(row.get("Meta", "-"))
         rep[f"{{{{{prefix}_LOG}}}}"]  = _v(row.get("Logrado", "-"))
 
-    # ── TOTAL
+    # TOTAL
     total = act["total_raw"]
     rep["{{LEADS_FB_REAL}}"]      = _v(_get_raw(total, "Facebook", 2))
     rep["{{LEADS_FB_META}}"]      = _v(_get_raw(total, "Facebook", 3))
@@ -370,15 +343,10 @@ def build_replacements(data_actual, data_anterior, variaciones, texts, config):
     rep["{{VENTAS_META}}"]        = _v(_get_raw(total, "VENTAS", 3))
     rep["{{VENTAS_LOG}}"]         = _v(_get_raw(total, "VENTAS", 4))
 
-    # ── CAMPAÑAS REGULARES COMPARATIVA
-    # El Sheet actual tiene la semana actual en cols 2-4 y la anterior en cols 5-7
-    camp_reg = [
-        ("Lima",         "LIMA"),
-        ("Trujillo B2C", "TRUJ_B2C"),
-        ("Trujillo B2B", "TRUJ_B2B"),
-    ]
+    # CAMPAÑAS REGULARES
+    camp_reg = [("Lima","LIMA"),("Trujillo B2C","TRUJ_B2C"),("Trujillo B2B","TRUJ_B2B")]
     for camp, prefix in camp_reg:
-        row = _find_row(act["reg_comp"], "Campaña", camp)
+        row  = _find_row(act["reg_comp"], "Campaña", camp)
         vals = list(row.values())
         rep[f"{{{{{prefix}_LEADS_ACT}}}}"] = _v(vals[2]) if len(vals) > 2 else "-"
         rep[f"{{{{{prefix}_CPL_ACT}}}}"]   = _v(vals[3]) if len(vals) > 3 else "-"
@@ -387,7 +355,6 @@ def build_replacements(data_actual, data_anterior, variaciones, texts, config):
         rep[f"{{{{{prefix}_CPL_ANT}}}}"]   = _v(vals[6]) if len(vals) > 6 else "-"
         rep[f"{{{{{prefix}_INV_ANT}}}}"]   = _v(vals[7]) if len(vals) > 7 else "-"
 
-    # Google ads
     row_g  = _find_row(act["reg_comp"], "Plataforma", "Google")
     vals_g = list(row_g.values())
     rep["{{GOOGLE_LEADS_ACT}}"] = _v(vals_g[2]) if len(vals_g) > 2 else "-"
@@ -397,7 +364,6 @@ def build_replacements(data_actual, data_anterior, variaciones, texts, config):
     rep["{{GOOGLE_CPL_ANT}}"]   = _v(vals_g[6]) if len(vals_g) > 6 else "-"
     rep["{{GOOGLE_INV_ANT}}"]   = _v(vals_g[7]) if len(vals_g) > 7 else "-"
 
-    # Totales
     row_t  = _find_row(act["reg_comp"], "Plataforma", "Total")
     vals_t = list(row_t.values())
     rep["{{TOTAL_LEADS_ACT}}"] = _v(vals_t[2]) if len(vals_t) > 2 else "-"
@@ -407,7 +373,7 @@ def build_replacements(data_actual, data_anterior, variaciones, texts, config):
     rep["{{TOTAL_CPL_ANT}}"]   = _v(vals_t[6]) if len(vals_t) > 6 else "-"
     rep["{{TOTAL_INV_ANT}}"]   = _v(vals_t[7]) if len(vals_t) > 7 else "-"
 
-    # ── MÉTRICAS SECUNDARIAS REGULARES
+    # MÉTRICAS SECUNDARIAS
     met_camps = [("Lima","LIMA"),("Trujillo B2C","TRUJ_B2C"),("Trujillo B2B","TRUJ_B2B")]
     for camp, prefix in met_camps:
         row = _find_row(act["reg_met"], "Campaña", camp)
@@ -418,26 +384,17 @@ def build_replacements(data_actual, data_anterior, variaciones, texts, config):
         rep[f"{{{{{prefix}_CLICS}}}}"]    = _v(row.get("Clic enlace", "-"))
         rep[f"{{{{{prefix}_ALCANCE}}}}"]  = _v(row.get("Alcance", "-"))
 
-    row_gt = (_find_row(act["reg_met"], "Campaña", "Lima") or  # fallback
-              _find_row(act["reg_met"], "Plataforma", "Google"))
-    row_gt = _find_row(act["reg_met"], "Campaña", "Total") or row_gt
-    rep["{{GOOGLE_CTR}}"]      = _v(row_gt.get("CTR ", "-"))
-    rep["{{GOOGLE_PCT_MSJS}}"] = _v(row_gt.get("% Mensajes", "-"))
-
     row_tt = (_find_row(act["reg_met"], "Plataforma", "Total") or
               _find_row(act["reg_met"], "Campaña", "Total"))
-    rep["{{TOTAL_CTR}}"]        = _v(row_tt.get("CTR ", row_tt.get("CTR", "-")))
-    rep["{{TOTAL_CTR_UNI}}"]    = _v(row_tt.get("CTR unico", "-"))
-    rep["{{TOTAL_PCT_MSJS}}"]   = _v(row_tt.get("% Mensajes", "-"))
-    rep["{{TOTAL_CPM}}"]        = _v(row_tt.get("CPM", "-"))
-    rep["{{TOTAL_IMPRESIONES}}"]= _v(row_tt.get("Impresiones", "-"))
-    rep["{{TOTAL_ALCANCE}}"]    = _v(row_tt.get("Alcance", "-"))
+    rep["{{TOTAL_CTR}}"]         = _v(row_tt.get("CTR ", row_tt.get("CTR", "-")))
+    rep["{{TOTAL_CTR_UNI}}"]     = _v(row_tt.get("CTR unico", "-"))
+    rep["{{TOTAL_PCT_MSJS}}"]    = _v(row_tt.get("% Mensajes", "-"))
+    rep["{{TOTAL_CPM}}"]         = _v(row_tt.get("CPM", "-"))
+    rep["{{TOTAL_IMPRESIONES}}"] = _v(row_tt.get("Impresiones", "-"))
+    rep["{{TOTAL_ALCANCE}}"]     = _v(row_tt.get("Alcance", "-"))
 
-    # ── INCENTIVOS COMPARATIVA
-    camp_inc = [
-        ("Incentivos trujillo", "INC_TRUJ"),
-        ("Incentivos Lima",     "INC_LIMA"),
-    ]
+    # INCENTIVOS
+    camp_inc = [("Incentivos trujillo","INC_TRUJ"),("Incentivos Lima","INC_LIMA")]
     for camp, prefix in camp_inc:
         row  = _find_row(act["inc_comp"], "Campaña", camp)
         vals = list(row.values())
@@ -457,7 +414,6 @@ def build_replacements(data_actual, data_anterior, variaciones, texts, config):
     rep["{{INC_TOTAL_CPL_ANT}}"]   = _v(vals_it[6]) if len(vals_it) > 6 else "-"
     rep["{{INC_TOTAL_INV_ANT}}"]   = _v(vals_it[7]) if len(vals_it) > 7 else "-"
 
-    # ── INCENTIVOS MÉTRICAS SEC
     for camp, prefix in [("Incentivos trujillo","INC_TRUJ"),("Incentivos Lima","INC_LIMA")]:
         row = _find_row(act["inc_met"], "Campaña", camp)
         rep[f"{{{{{prefix}_CTR}}}}"]      = _v(row.get("CTR ", row.get("CTR", "-")))
@@ -472,7 +428,7 @@ def build_replacements(data_actual, data_anterior, variaciones, texts, config):
     rep["{{INC_TOTAL_PCT_MSJS}}"] = _v(row_imt.get("% Mensajes", "-"))
     rep["{{INC_TOTAL_CPM}}"]      = _v(row_imt.get("CPM", "-"))
 
-    # ── VARIACIONES DEL FUNNEL (calculadas automáticamente)
+    # VARIACIONES (calculadas automáticamente)
     rep["{{FB_INV_ACT}}"]   = variaciones["fb_inv_act"]
     rep["{{FB_INV_ANT}}"]   = variaciones["fb_inv_ant"]
     rep["{{FB_INV_VAR}}"]   = variaciones["fb_inv_var"]
@@ -492,7 +448,7 @@ def build_replacements(data_actual, data_anterior, variaciones, texts, config):
     rep["{{G_CPL_ANT}}"]    = variaciones["g_cpl_ant"]
     rep["{{G_CPL_VAR}}"]    = variaciones["g_cpl_var"]
 
-    # ── Textos de Claude
+    # TEXTOS DE GEMINI
     rep["{{COMENTARIO_OVERVIEW}}"]     = texts.get("comentario_overview", "")
     rep["{{COMENTARIO_METRICAS_SEC}}"] = texts.get("comentario_metricas_sec", "")
     rep["{{COMENTARIO_INCENTIVOS}}"]   = texts.get("comentario_incentivos", "")
