@@ -283,7 +283,7 @@ Responde ÚNICAMENTE con JSON válido, sin backticks ni texto extra:
 """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash-preview-04-17",
+        model="gemini-2.5-flash",
         contents=prompt
     )
 
