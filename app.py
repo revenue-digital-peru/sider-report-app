@@ -230,7 +230,7 @@ def calcular_variaciones(actual, anterior):
 # ─────────────────────────────────────────────
 def generate_texts_with_gemini(data_actual, data_anterior, variaciones, config):
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash-latest")
+    model = genai.GenerativeModel("gemini-2.5-flash-preview-04-17")
 
     reg_comp_clean = [r for r in data_actual["reg_comp"]
                       if r.get("Plataforma") or r.get("Campaña")]
