@@ -10,7 +10,6 @@ import json
 import re
 from datetime import datetime
 from flask import Flask, request, jsonify, send_file, render_template
-import google.generativeai as genai
 import openpyxl
 
 app = Flask(__name__)
@@ -229,8 +228,10 @@ def calcular_variaciones(actual, anterior):
 # GENERACIÓN DE TEXTOS CON GOOGLE GEMINI
 # ─────────────────────────────────────────────
 def generate_texts_with_gemini(data_actual, data_anterior, variaciones, config):
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-2.5-flash-preview-04-17")
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
     reg_comp_clean = [r for r in data_actual["reg_comp"]
                       if r.get("Plataforma") or r.get("Campaña")]
@@ -264,10 +265,7 @@ Google - Inversión: {variaciones['g_inv_ant']} → {variaciones['g_inv_act']} (
 Google - Leads: {variaciones['g_leads_ant']} → {variaciones['g_leads_act']} ({variaciones['g_leads_var']})
 Google - CPL: {variaciones['g_cpl_ant']} → {variaciones['g_cpl_act']} ({variaciones['g_cpl_var']})
 
-Genera textos analíticos ejecutivos, directos, basados 100% en los datos.
-Máximo 4-5 oraciones por campo. Sin viñetas.
-
-Responde ÚNICAMENTE con un JSON válido. Sin backticks, sin texto antes ni después.
+Responde ÚNICAMENTE con JSON válido, sin backticks ni texto extra:
 
 {{
   "comentario_overview": "...",
@@ -284,7 +282,11 @@ Responde ÚNICAMENTE con un JSON válido. Sin backticks, sin texto antes ni desp
 }}
 """
 
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash-preview-04-17",
+        contents=prompt
+    )
+
     raw = response.text.strip()
     raw = re.sub(r"^```(?:json)?\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)
