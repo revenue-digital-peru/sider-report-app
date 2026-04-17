@@ -1,7 +1,6 @@
-flask==3.0.3
-anthropic==0.25.0
-httpx==0.24.1
-openpyxl==3.1.2
-python-pptx==0.6.23
-gunicorn==22.0.0
-python-dotenv==1.0.1
+flask==3.1.0
+anthropic==0.49.0
+openpyxl==3.1.5
+python-pptx==1.0.2
+gunicorn==23.0.0
+python-dotenv==1.1.0
